@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Granted
 
-## Getting Started
+Plain-language project description in, matched grants + demystified requirement checklists out.
 
-First, run the development server:
+## Local dev
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Backend:
+```
+cd backend
+python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
+cp .env.example .env  # fill in ANTHROPIC_API_KEY
+./venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Frontend:
+```
+cd frontend
+npm install
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Smoke-test the three data sources are reachable:
+```
+curl "http://localhost:8000/api/smoke-test?keyword=education"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy
 
-## Learn More
+Single Render web service (`render.yaml`) builds the React app and serves it as static
+files from the FastAPI backend. Set `ANTHROPIC_API_KEY` in the Render dashboard.
 
-To learn more about Next.js, take a look at the following resources:
+## Data sources (Phase 1)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **grants.gov** — live, open funding opportunities. No auth.
+- **SBIR.gov** — live SBIR/STTR solicitations. No auth, but the public API has been
+  observed rate-limited/unavailable — wrapped to degrade gracefully (returns empty list,
+  never breaks the request).
+- **NSF Award Search** — historical NSF awards. No auth. Used as supporting evidence in
+  match explanations, not as an application target (it's already-funded, closed data).
