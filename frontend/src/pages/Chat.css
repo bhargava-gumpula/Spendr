@@ -184,6 +184,30 @@
   padding: 8px 12px;
 }
 
+.checklist-btn { margin-top: 14px; }
+
+.checklist-loading {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+}
+
+.doc-checklist { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); }
+.doc-checklist-head {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.doc-checklist-head + .explain-steps { margin-bottom: 14px; }
+.doc-checklist-list { margin: 0 0 14px; padding-left: 20px; font-size: 0.9rem; }
+.doc-checklist-list li { margin: 5px 0; }
+
 /* ---- composer ---- */
 .composer {
   flex: none;

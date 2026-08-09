@@ -31,6 +31,8 @@ class GrantDetail(BaseModel):
     deadline_display: str | None = None  # raw "Sep 01, 2026" style string from source
     award_floor: str | None = None
     award_ceiling: str | None = None
+    opportunity_number: str | None = None  # e.g. "USDA-NRCS-NHQ-WMBP-NOFO0001458" — helps target PDF search
+    attachment_filenames: list[str] = []  # real NOFO/RFP PDF filenames, if any are attached
     fetch_status: str = "ok"  # "ok" | "unavailable"
     fetch_error: str | None = None
 
@@ -45,6 +47,7 @@ class GrantRef(BaseModel):
     external_id: str
     title: str
     url: str | None = None
+    agency: str | None = None
 
 
 class ChatRequest(BaseModel):
@@ -87,3 +90,16 @@ class ChatResponse(BaseModel):
     matches: list[MatchResult] | None = None
     explanation: GrantExplanation | None = None
     active_grant: GrantRef | None = None  # echoes back which grant (if any) is still mid-interview
+
+
+class DocumentChecklist(BaseModel):
+    """Phase 2: the required-documents list pulled from a grant's actual full
+    NOFO/RFP PDF — distinct from GrantExplanation.steps, which mixes
+    eligibility fix-its with next actions rather than being a clean list."""
+
+    grant: GrantRef
+    found: bool
+    required_documents: list[str] = []
+    application_steps: list[str] = []
+    source_url: str | None = None
+    confidence: str = "high"  # "high" | "low"

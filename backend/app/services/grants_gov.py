@@ -37,9 +37,17 @@ async def fetch_detail(opportunity_id: str) -> GrantDetail:
             resp = await client.post(DETAIL_URL, json={"opportunityId": int(opportunity_id)})
             resp.raise_for_status()
             payload = resp.json()
-        syn = payload["data"]["synopsis"]
+        data = payload["data"]
+        syn = data["synopsis"]
     except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
         return GrantDetail(external_id=opportunity_id, fetch_status="unavailable", fetch_error=str(exc))
+
+    filenames = [
+        att.get("fileName")
+        for folder in (data.get("synopsisAttachmentFolders") or [])
+        for att in (folder.get("synopsisAttachments") or [])
+        if att.get("fileName")
+    ]
 
     return GrantDetail(
         external_id=opportunity_id,
@@ -48,5 +56,7 @@ async def fetch_detail(opportunity_id: str) -> GrantDetail:
         deadline_display=syn.get("responseDateStr") or syn.get("responseDate"),
         award_floor=syn.get("awardFloorFormatted"),
         award_ceiling=syn.get("awardCeilingFormatted"),
+        opportunity_number=data.get("opportunityNumber"),
+        attachment_filenames=filenames,
         fetch_status="ok",
     )

@@ -74,6 +74,73 @@ function MatchCard({ result, onAskApply }) {
   )
 }
 
+function DocumentChecklistBlock({ grant }) {
+  const [state, setState] = useState('idle') // idle | loading | done | error
+  const [checklist, setChecklist] = useState(null)
+
+  async function handleClick() {
+    setState('loading')
+    try {
+      const resp = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(grant),
+      })
+      if (!resp.ok) throw new Error(`Server error (${resp.status})`)
+      setChecklist(await resp.json())
+      setState('done')
+    } catch {
+      setState('error')
+    }
+  }
+
+  if (state === 'idle') {
+    return (
+      <button type="button" className="ask-apply-btn checklist-btn" onClick={handleClick}>
+        Get full document checklist
+      </button>
+    )
+  }
+
+  if (state === 'loading') {
+    return (
+      <div className="checklist-loading">
+        <div className="typing-dots"><span /><span /><span /></div>
+        Reading the full announcement — this can take up to 30s…
+      </div>
+    )
+  }
+
+  if (state === 'error' || (checklist && !checklist.found)) {
+    return <div className="explain-low-confidence">Couldn't locate or read the full announcement document — check the official listing for the required documents.</div>
+  }
+
+  return (
+    <div className="doc-checklist">
+      {checklist.required_documents?.length > 0 && (
+        <>
+          <div className="doc-checklist-head">Required documents</div>
+          <ul className="doc-checklist-list">
+            {checklist.required_documents.map((d, i) => <li key={i}>{d}</li>)}
+          </ul>
+        </>
+      )}
+      {checklist.application_steps?.length > 0 && (
+        <>
+          <div className="doc-checklist-head">Submission process</div>
+          <ol className="explain-steps">
+            {checklist.application_steps.map((s, i) => <li key={i}>{s}</li>)}
+          </ol>
+        </>
+      )}
+      {checklist.confidence === 'low' && (
+        <div className="explain-low-confidence">Partial read of the full document — double check against the source.</div>
+      )}
+      {checklist.source_url && <VerifyLink url={checklist.source_url} />}
+    </div>
+  )
+}
+
 function ExplanationCard({ explanation }) {
   return (
     <div className="explain-card">
@@ -98,6 +165,7 @@ function ExplanationCard({ explanation }) {
             : 'Low-confidence read on this one — double check the details on the official listing.'}
         </div>
       )}
+      <DocumentChecklistBlock grant={explanation.grant} />
     </div>
   )
 }
@@ -121,7 +189,7 @@ export default function Chat() {
       const next = [...prev]
       for (const m of matches) {
         if (!next.some((g) => g.source === m.source && g.external_id === m.external_id)) {
-          next.push({ source: m.source, external_id: m.external_id, title: m.title, url: m.url })
+          next.push({ source: m.source, external_id: m.external_id, title: m.title, url: m.url, agency: m.agency })
         }
       }
       return next
