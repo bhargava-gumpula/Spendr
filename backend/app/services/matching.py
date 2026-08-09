@@ -1,7 +1,7 @@
 import asyncio
 
 from app.models.schemas import GrantDetail, MatchResult, ProjectProfile
-from app.services import claude_match, grants_gov, sbir
+from app.services import ai_match, grants_gov, sbir
 from app.services.dates import days_until, parse_deadline
 
 MAX_CANDIDATES = 14
@@ -26,7 +26,7 @@ async def run_match(profile: ProjectProfile) -> list[MatchResult]:
         if c.source == "sbir.gov":
             details[c.external_id] = sbir.detail_for(c)
 
-    scored = await claude_match.rank_and_explain(profile, candidates, details)
+    scored = await ai_match.rank_and_explain(profile, candidates, details)
 
     results: list[MatchResult] = []
     for c in candidates:

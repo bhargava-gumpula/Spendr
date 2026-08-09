@@ -8,7 +8,7 @@ Backend:
 ```
 cd backend
 python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
-cp .env.example .env  # fill in ANTHROPIC_API_KEY
+cp .env.example .env  # fill in OPENAI_API_KEY
 ./venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
@@ -27,7 +27,7 @@ curl "http://localhost:8000/api/smoke-test?keyword=education"
 ## Deploy
 
 Single Render web service (`render.yaml`) builds the React app and serves it as static
-files from the FastAPI backend. Set `ANTHROPIC_API_KEY` in the Render dashboard.
+files from the FastAPI backend. Set `OPENAI_API_KEY` in the Render dashboard.
 
 ## Data sources (Phase 1)
 

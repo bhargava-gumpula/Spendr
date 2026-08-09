@@ -7,7 +7,7 @@ from app.models.schemas import (
     GrantRef,
     ProjectProfile,
 )
-from app.services import claude_chat
+from app.services import ai_chat
 from app.services.matching import fetch_grant_detail, run_match
 
 router = APIRouter()
@@ -15,7 +15,7 @@ router = APIRouter()
 
 @router.post("/api/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest) -> ChatResponse:
-    decision = await claude_chat.route(req.messages, req.known_grants)
+    decision = await ai_chat.route(req.messages, req.known_grants)
     intent = decision.get("intent", "chat")
     message = decision.get("message", "")
 
@@ -47,7 +47,7 @@ async def chat(req: ChatRequest) -> ChatResponse:
             return ChatResponse(reply="I'm not sure which grant you mean — could you name it or say which one (first, second...)?")
 
         detail = await fetch_grant_detail(match_ref.source, match_ref.external_id, match_ref.title)
-        advice = await claude_chat.advise_on_grant(req.messages, match_ref, detail)
+        advice = await ai_chat.advise_on_grant(req.messages, match_ref, detail)
 
         if advice.get("action") == "ask_question":
             # Still interviewing — just a chat reply, no verdict card yet.
