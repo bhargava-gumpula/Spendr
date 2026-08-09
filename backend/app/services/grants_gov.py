@@ -1,8 +1,9 @@
 import httpx
 
-from app.models.schemas import GrantCandidate
+from app.models.schemas import GrantCandidate, GrantDetail
 
 SEARCH_URL = "https://api.grants.gov/v1/api/search2"
+DETAIL_URL = "https://api.grants.gov/v1/api/fetchOpportunity"
 
 
 async def search(keyword: str, rows: int = 10) -> list[GrantCandidate]:
@@ -25,3 +26,27 @@ async def search(keyword: str, rows: int = 10) -> list[GrantCandidate]:
         )
         for hit in hits
     ]
+
+
+async def fetch_detail(opportunity_id: str) -> GrantDetail:
+    """Full synopsis incl. eligibility text and deadline — used both to check
+    qualification at match time and to build the Phase 2 checklist. If this
+    fails, the caller must say so rather than guess at eligibility."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(DETAIL_URL, json={"opportunityId": int(opportunity_id)})
+            resp.raise_for_status()
+            payload = resp.json()
+        syn = payload["data"]["synopsis"]
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
+        return GrantDetail(external_id=opportunity_id, fetch_status="unavailable", fetch_error=str(exc))
+
+    return GrantDetail(
+        external_id=opportunity_id,
+        eligibility_text=syn.get("applicantEligibilityDesc"),
+        synopsis_text=syn.get("synopsisDesc"),
+        deadline_display=syn.get("responseDateStr") or syn.get("responseDate"),
+        award_floor=syn.get("awardFloorFormatted"),
+        award_ceiling=syn.get("awardCeilingFormatted"),
+        fetch_status="ok",
+    )

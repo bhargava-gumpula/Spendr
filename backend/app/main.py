@@ -4,9 +4,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.routers import match as match_router
 from app.services import grants_gov, nsf, sbir
 
 app = FastAPI(title="Granted API")
+app.include_router(match_router.router)
 
 app.add_middleware(
     CORSMiddleware,
