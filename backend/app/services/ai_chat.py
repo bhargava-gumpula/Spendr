@@ -3,43 +3,41 @@ from app.services.ai_client import call_function
 
 ROUTE_TOOL = {
     "type": "function",
-    "function": {
-        "name": "route_conversation",
-        "description": "Decide what to do next in this grants-advisor conversation.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "intent": {
-                    "type": "string",
-                    "enum": ["ask_question", "search", "explain_grant", "chat"],
-                },
-                "message": {
-                    "type": "string",
-                    "description": "What to say to the user this turn. For ask_question/chat this IS the full reply. For search/explain_grant this is a short transition line (e.g. 'Let me look for grants that fit that...').",
-                },
-                "profile": {
-                    "type": "object",
-                    "description": "Only when intent=search. Your best synthesis of the project from the whole conversation so far.",
-                    "properties": {
-                        "description": {"type": "string"},
-                        "field": {"type": "string", "description": "Short domain/keyword to search with, e.g. 'food security', 'clean energy'."},
-                        "stage": {"type": "string"},
-                        "team_size": {"type": "integer"},
-                        "location": {"type": "string"},
-                        "funding_needed": {"type": "string"},
-                    },
-                },
-                "selected_grant": {
-                    "type": "object",
-                    "description": "Only when intent=explain_grant. Must match one entry from the known grants list provided.",
-                    "properties": {
-                        "source": {"type": "string"},
-                        "external_id": {"type": "string"},
-                    },
+    "name": "route_conversation",
+    "description": "Decide what to do next in this grants-advisor conversation.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "intent": {
+                "type": "string",
+                "enum": ["ask_question", "search", "explain_grant", "chat"],
+            },
+            "message": {
+                "type": "string",
+                "description": "What to say to the user this turn. For ask_question/chat this IS the full reply. For search/explain_grant this is a short transition line (e.g. 'Let me look for grants that fit that...').",
+            },
+            "profile": {
+                "type": "object",
+                "description": "Only when intent=search. Your best synthesis of the project from the whole conversation so far.",
+                "properties": {
+                    "description": {"type": "string"},
+                    "field": {"type": "string", "description": "Short domain/keyword to search with, e.g. 'food security', 'clean energy'."},
+                    "stage": {"type": "string"},
+                    "team_size": {"type": "integer"},
+                    "location": {"type": "string"},
+                    "funding_needed": {"type": "string"},
                 },
             },
-            "required": ["intent", "message"],
+            "selected_grant": {
+                "type": "object",
+                "description": "Only when intent=explain_grant. Must match one entry from the known grants list provided.",
+                "properties": {
+                    "source": {"type": "string"},
+                    "external_id": {"type": "string"},
+                },
+            },
         },
+        "required": ["intent", "message"],
     },
 }
 
@@ -58,10 +56,9 @@ at least a rough sense of stage/team/location/funding — approximate answers li
 
 Set intent="explain_grant" when the user asks about, or picks, one of the grants already shown \
 (match it against the known grants list by title or position — e.g. "the first one" or "the NSF \
-one" or its name). Put the matched source+external_id in selected_grant. Also set \
-intent="explain_grant" with the SAME selected_grant if your previous message was a question about \
-that grant's specific eligibility and the user just answered it — a grant deep-dive can take \
-several turns of back-and-forth before it's resolved, and it should keep going until it's resolved.
+one" or its name). Put the matched source+external_id in selected_grant. (Note: continuing an \
+already-started eligibility interview is handled deterministically before you're ever called —
+you'll only see this case for a grant the user is picking for the first time.)
 
 Set intent="chat" for anything else — small talk, clarification, follow-up questions that aren't \
 about a specific grant.
@@ -96,32 +93,30 @@ async def route(messages: list[ChatMessage], known_grants: list[GrantRef]) -> di
 
 ADVISE_TOOL = {
     "type": "function",
-    "function": {
-        "name": "advise_on_grant",
-        "description": "Continue or resolve an eligibility interview about one specific grant.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "type": "string",
-                    "enum": ["ask_question", "give_verdict"],
-                    "description": "'ask_question' if there's a specific, material eligibility criterion from the text you can't confirm from the conversation yet. 'give_verdict' once you have enough, or once further questions genuinely won't resolve it.",
-                },
-                "message": {
-                    "type": "string",
-                    "description": "For ask_question: the single targeted question. For give_verdict: a short conversational intro to the verdict.",
-                },
-                "eligibility_summary": {"type": "string", "description": "Only for give_verdict."},
-                "qualifies": {
-                    "type": "string",
-                    "enum": ["yes", "likely", "unclear", "no"],
-                    "description": "Only for give_verdict. Grounded in the eligibility text plus what the user told you.",
-                },
-                "steps": {"type": "array", "items": {"type": "string"}, "description": "Only for give_verdict."},
-                "confidence": {"type": "string", "enum": ["high", "low"], "description": "Only for give_verdict."},
+    "name": "advise_on_grant",
+    "description": "Continue or resolve an eligibility interview about one specific grant.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "string",
+                "enum": ["ask_question", "give_verdict"],
+                "description": "'ask_question' if there's a specific, material eligibility criterion from the text you can't confirm from the conversation yet. 'give_verdict' once you have enough, or once further questions genuinely won't resolve it.",
             },
-            "required": ["action", "message"],
+            "message": {
+                "type": "string",
+                "description": "For ask_question: the single targeted question. For give_verdict: a short conversational intro to the verdict.",
+            },
+            "eligibility_summary": {"type": "string", "description": "Only for give_verdict."},
+            "qualifies": {
+                "type": "string",
+                "enum": ["yes", "likely", "unclear", "no"],
+                "description": "Only for give_verdict. Grounded in the eligibility text plus what the user told you.",
+            },
+            "steps": {"type": "array", "items": {"type": "string"}, "description": "Only for give_verdict."},
+            "confidence": {"type": "string", "enum": ["high", "low"], "description": "Only for give_verdict."},
         },
+        "required": ["action", "message"],
     },
 }
 

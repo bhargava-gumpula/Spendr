@@ -84,6 +84,7 @@ export default function Chat() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [activeGrant, setActiveGrant] = useState(null)
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -121,6 +122,7 @@ export default function Chat() {
         body: JSON.stringify({
           messages: nextMessages.map(({ role, content }) => ({ role, content })),
           known_grants: knownGrants,
+          active_grant: activeGrant,
         }),
       })
       if (!resp.ok) {
@@ -129,6 +131,7 @@ export default function Chat() {
       }
       const data = await resp.json()
       mergeKnownGrants(data.matches)
+      setActiveGrant(data.active_grant || null)
       setMessages((prev) => [...prev, { role: 'assistant', content: data.reply, matches: data.matches, explanation: data.explanation }])
     } catch (err) {
       setError(err.message)

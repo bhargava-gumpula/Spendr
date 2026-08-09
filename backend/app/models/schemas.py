@@ -49,6 +49,7 @@ class GrantRef(BaseModel):
 class ChatRequest(BaseModel):
     messages: list[ChatMessage]
     known_grants: list[GrantRef] = []
+    active_grant: GrantRef | None = None  # grant currently mid eligibility-interview, if any
 
 
 class GrantExplanation(BaseModel):
@@ -84,3 +85,4 @@ class ChatResponse(BaseModel):
     reply: str
     matches: list[MatchResult] | None = None
     explanation: GrantExplanation | None = None
+    active_grant: GrantRef | None = None  # echoes back which grant (if any) is still mid-interview

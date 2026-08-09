@@ -60,6 +60,17 @@ async def run_match(profile: ProjectProfile) -> list[MatchResult]:
             )
             continue
 
+        # Data-integrity guardrail: don't trust the model's self-reported
+        # confidence when we know the source text was unavailable.
+        qualifies = s["qualifies"]
+        confidence = s["confidence"]
+        gap_reasons = s["gap_reasons"]
+        if detail is None or detail.fetch_status != "ok":
+            qualifies = "unclear"
+            confidence = "low"
+            if not any("unavailable" in g.lower() or "fetch" in g.lower() for g in gap_reasons):
+                gap_reasons = [*gap_reasons, "Eligibility page unavailable — could not be verified from the source."]
+
         results.append(
             MatchResult(
                 source=c.source,
@@ -72,10 +83,10 @@ async def run_match(profile: ProjectProfile) -> list[MatchResult]:
                 days_until_deadline=days_until(deadline_date),
                 funding_range=funding_range,
                 match_score=s["match_score"],
-                qualifies=s["qualifies"],
+                qualifies=qualifies,
                 fit_reasons=s["fit_reasons"],
-                gap_reasons=s["gap_reasons"],
-                confidence=s["confidence"],
+                gap_reasons=gap_reasons,
+                confidence=confidence,
             )
         )
 

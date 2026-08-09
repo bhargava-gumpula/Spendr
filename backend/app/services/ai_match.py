@@ -3,51 +3,49 @@ from app.services.ai_client import call_function
 
 TOOL = {
     "type": "function",
-    "function": {
-        "name": "report_matches",
-        "description": "Report ranked grant matches with qualification assessment.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "matches": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "external_id": {"type": "string"},
-                            "match_score": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "maximum": 100,
-                                "description": "Relevance to this project, 0-100. Not just keyword overlap — weigh field, stage, team size, location, and funding needed.",
-                            },
-                            "qualifies": {
-                                "type": "string",
-                                "enum": ["yes", "likely", "unclear", "no"],
-                                "description": "'unclear' if eligibility text was unavailable or too vague to judge — never guess yes/no without evidence.",
-                            },
-                            "fit_reasons": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                                "description": "Specific reasons this grant fits, citing the actual eligibility/synopsis text.",
-                            },
-                            "gap_reasons": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                                "description": "Specific reasons it might not fit or requirements couldn't be verified.",
-                            },
-                            "confidence": {
-                                "type": "string",
-                                "enum": ["high", "low"],
-                                "description": "'low' if eligibility text was missing, truncated, or ambiguous.",
-                            },
+    "name": "report_matches",
+    "description": "Report ranked grant matches with qualification assessment.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "matches": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "external_id": {"type": "string"},
+                        "match_score": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100,
+                            "description": "Relevance to this project, 0-100. Not just keyword overlap — weigh field, stage, team size, location, and funding needed.",
                         },
-                        "required": ["external_id", "match_score", "qualifies", "fit_reasons", "gap_reasons", "confidence"],
+                        "qualifies": {
+                            "type": "string",
+                            "enum": ["yes", "likely", "unclear", "no"],
+                            "description": "'unclear' if eligibility text was unavailable or too vague to judge — never guess yes/no without evidence.",
+                        },
+                        "fit_reasons": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Specific reasons this grant fits, citing the actual eligibility/synopsis text.",
+                        },
+                        "gap_reasons": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Specific reasons it might not fit or requirements couldn't be verified.",
+                        },
+                        "confidence": {
+                            "type": "string",
+                            "enum": ["high", "low"],
+                            "description": "'low' if eligibility text was missing, truncated, or ambiguous.",
+                        },
                     },
-                }
-            },
-            "required": ["matches"],
+                    "required": ["external_id", "match_score", "qualifies", "fit_reasons", "gap_reasons", "confidence"],
+                },
+            }
         },
+        "required": ["matches"],
     },
 }
 
