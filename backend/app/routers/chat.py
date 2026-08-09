@@ -47,17 +47,23 @@ async def chat(req: ChatRequest) -> ChatResponse:
             return ChatResponse(reply="I'm not sure which grant you mean — could you name it or say which one (first, second...)?")
 
         detail = await fetch_grant_detail(match_ref.source, match_ref.external_id, match_ref.title)
-        explanation = await claude_chat.explain_application(match_ref, detail)
+        advice = await claude_chat.advise_on_grant(req.messages, match_ref, detail)
+
+        if advice.get("action") == "ask_question":
+            # Still interviewing — just a chat reply, no verdict card yet.
+            return ChatResponse(reply=advice.get("message", ""))
+
         return ChatResponse(
-            reply=explanation.get("message", ""),
+            reply=advice.get("message", ""),
             explanation=GrantExplanation(
                 grant=match_ref,
-                message=explanation.get("message", ""),
-                eligibility_summary=explanation.get("eligibility_summary"),
+                message=advice.get("message", ""),
+                eligibility_summary=advice.get("eligibility_summary"),
+                qualifies=advice.get("qualifies"),
                 deadline_display=detail.deadline_display,
                 funding_range=(f"{detail.award_floor or '?'} – {detail.award_ceiling or '?'}" if (detail.award_floor or detail.award_ceiling) else None),
-                steps=explanation.get("steps", []),
-                confidence=explanation.get("confidence", "high"),
+                steps=advice.get("steps", []),
+                confidence=advice.get("confidence", "high"),
                 fetch_status=detail.fetch_status,
             ),
         )

@@ -60,7 +60,10 @@ at least a rough sense of stage/team/location/funding — approximate answers li
 
 Set intent="explain_grant" when the user asks about, or picks, one of the grants already shown \
 (match it against the known grants list by title or position — e.g. "the first one" or "the NSF \
-one" or its name). Put the matched source+external_id in selected_grant.
+one" or its name). Put the matched source+external_id in selected_grant. Also set \
+intent="explain_grant" with the SAME selected_grant if your previous message was a question about \
+that grant's specific eligibility and the user just answered it — a grant deep-dive can take \
+several turns of back-and-forth before it's resolved, and it should keep going until it's resolved.
 
 Set intent="chat" for anything else — small talk, clarification, follow-up questions that aren't \
 about a specific grant.
@@ -103,29 +106,53 @@ async def route(messages: list[ChatMessage], known_grants: list[GrantRef]) -> di
     return {"intent": "chat", "message": "Sorry, could you say that again?"}
 
 
-EXPLAIN_TOOL = {
-    "name": "explain_application",
-    "description": "Explain how to apply to this specific grant, grounded only in the provided text.",
+ADVISE_TOOL = {
+    "name": "advise_on_grant",
+    "description": "Continue or resolve an eligibility interview about one specific grant.",
     "input_schema": {
         "type": "object",
         "properties": {
-            "message": {"type": "string", "description": "Friendly conversational explanation of how to apply."},
-            "eligibility_summary": {"type": "string"},
-            "steps": {"type": "array", "items": {"type": "string"}},
-            "confidence": {"type": "string", "enum": ["high", "low"]},
+            "action": {
+                "type": "string",
+                "enum": ["ask_question", "give_verdict"],
+                "description": "'ask_question' if there's a specific, material eligibility criterion from the text you can't confirm from the conversation yet. 'give_verdict' once you have enough, or once further questions genuinely won't resolve it.",
+            },
+            "message": {
+                "type": "string",
+                "description": "For ask_question: the single targeted question. For give_verdict: a short conversational intro to the verdict.",
+            },
+            "eligibility_summary": {"type": "string", "description": "Only for give_verdict."},
+            "qualifies": {
+                "type": "string",
+                "enum": ["yes", "likely", "unclear", "no"],
+                "description": "Only for give_verdict. Grounded in the eligibility text plus what the user told you.",
+            },
+            "steps": {"type": "array", "items": {"type": "string"}, "description": "Only for give_verdict."},
+            "confidence": {"type": "string", "enum": ["high", "low"], "description": "Only for give_verdict."},
         },
-        "required": ["message", "steps", "confidence"],
+        "required": ["action", "message"],
     },
 }
 
-EXPLAIN_SYSTEM = """You are a grants advisor explaining, in plain language, how someone would \
-apply to one specific grant. Ground everything ONLY in the eligibility/synopsis text provided — \
-if it's missing, marked unavailable, or too thin to describe real steps, say so plainly in the \
-message and set confidence to "low" with a short, honest steps list (e.g. just "read the full \
-opportunity page" ) instead of inventing an application process."""
+ADVISE_SYSTEM = """You are a grants advisor doing a real eligibility interview with someone about \
+one specific grant, grounded ONLY in the eligibility/synopsis text provided — never invent \
+criteria that aren't in that text.
+
+Read the eligibility text and compare it against everything you already know about the user from \
+the conversation. If a specific, material criterion (e.g. organization type, citizenship, \
+location, business size, incorporation status, revenue) isn't yet confirmed by anything the user \
+has said, ask ONE natural, specific question about just that criterion — don't ask about things \
+already covered earlier in the conversation, and don't ask generic questions the eligibility text \
+doesn't actually require.
+
+Once you've confirmed the material criteria (or asked a couple of genuinely necessary questions \
+and it's still ambiguous — that's fine, real eligibility text is often vague), give the verdict: a \
+qualifies rating grounded in what you now know, a short eligibility summary, and clear next steps \
+to actually apply. If the requirements text was unavailable or too thin to say anything real, say \
+so plainly and set confidence to "low" rather than guessing."""
 
 
-async def explain_application(grant: GrantRef, detail: GrantDetail) -> dict:
+async def advise_on_grant(messages: list[ChatMessage], grant: GrantRef, detail: GrantDetail) -> dict:
     if detail.fetch_status != "ok":
         text = "[requirements page unavailable — could not be fetched or parsed]"
     else:
@@ -140,12 +167,21 @@ async def explain_application(grant: GrantRef, detail: GrantDetail) -> dict:
     response = await client.messages.create(
         model=MODEL,
         max_tokens=1200,
-        system=EXPLAIN_SYSTEM,
-        tools=[EXPLAIN_TOOL],
-        tool_choice={"type": "tool", "name": "explain_application"},
-        messages=[{"role": "user", "content": f"GRANT: {grant.title}\n\n{text}"}],
+        system=ADVISE_SYSTEM,
+        tools=[ADVISE_TOOL],
+        tool_choice={"type": "tool", "name": "advise_on_grant"},
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f"GRANT: {grant.title}\n\n{text}\n\n"
+                    f"FULL CONVERSATION SO FAR (for facts already established about the user, and "
+                    f"any prior back-and-forth about this grant):\n{_history_block(messages)}"
+                ),
+            }
+        ],
     )
     for block in response.content:
-        if block.type == "tool_use" and block.name == "explain_application":
+        if block.type == "tool_use" and block.name == "advise_on_grant":
             return block.input
-    return {"message": "I couldn't put together an explanation for that one.", "steps": [], "confidence": "low"}
+    return {"action": "give_verdict", "message": "I couldn't put together an answer for that one.", "steps": [], "confidence": "low"}

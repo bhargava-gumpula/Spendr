@@ -55,6 +55,7 @@ class GrantExplanation(BaseModel):
     grant: GrantRef
     message: str
     eligibility_summary: str | None = None
+    qualifies: str | None = None  # "yes" | "likely" | "unclear" | "no"
     deadline_display: str | None = None
     funding_range: str | None = None
     steps: list[str] = []
