@@ -12,6 +12,12 @@ const QUALIFIES_LABEL = {
   no: 'May not qualify',
 }
 
+const SOURCE_LABEL = {
+  'grants.gov': 'grants.gov',
+  'sbir.gov': 'sbir.gov',
+  web: 'found via web search',
+}
+
 function formatDeadline(result) {
   if (result.deadline) {
     const d = new Date(result.deadline + 'T00:00:00')
@@ -36,7 +42,7 @@ function MatchCard({ result, onAskApply }) {
           <div className="match-title">
             {result.url ? <a href={result.url} target="_blank" rel="noreferrer">{result.title}</a> : result.title}
           </div>
-          <div className="match-meta">{result.agency || 'Unknown agency'} · {result.source}</div>
+          <div className="match-meta">{result.agency || 'Unknown agency'} · {SOURCE_LABEL[result.source] || result.source}</div>
         </div>
         <div className="score-chip">{result.match_score}</div>
       </div>

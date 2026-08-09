@@ -14,7 +14,7 @@ ROUTE_TOOL = {
             },
             "message": {
                 "type": "string",
-                "description": "What to say to the user this turn. For ask_question/chat this IS the full reply. For search/explain_grant this is a short transition line (e.g. 'Let me look for grants that fit that...').",
+                "description": "What to say to the user this turn. For ask_question/chat this IS the full reply. For search/explain_grant this is a short transition line (e.g. 'Let me look for grants that fit that...') — results are already attached, so never phrase this as a question waiting on more info.",
             },
             "profile": {
                 "type": "object",

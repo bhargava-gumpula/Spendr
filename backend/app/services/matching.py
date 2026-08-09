@@ -1,7 +1,7 @@
 import asyncio
 
 from app.models.schemas import GrantDetail, MatchResult, ProjectProfile
-from app.services import ai_match, grants_gov, sbir
+from app.services import ai_match, grants_gov, sbir, web_search
 from app.services.dates import days_until, parse_deadline
 
 MAX_CANDIDATES = 14
@@ -10,11 +10,15 @@ MAX_CANDIDATES = 14
 async def run_match(profile: ProjectProfile) -> list[MatchResult]:
     keyword = profile.field
 
-    grants_gov_hits, sbir_hits = await asyncio.gather(
+    # Run all three sources in parallel — web search is the slow one
+    # (real search, bounded to a few rounds), so total latency is bounded
+    # by it rather than the sum of all three.
+    grants_gov_hits, sbir_hits, web_hits = await asyncio.gather(
         grants_gov.search(keyword, rows=10),
         sbir.search(keyword, rows=6),
+        web_search.find_web_grants(profile),
     )
-    candidates = (grants_gov_hits + sbir_hits)[:MAX_CANDIDATES]
+    candidates = (grants_gov_hits + sbir_hits + web_hits)[:MAX_CANDIDATES]
 
     if not candidates:
         return []
@@ -25,6 +29,16 @@ async def run_match(profile: ProjectProfile) -> list[MatchResult]:
     for c in candidates:
         if c.source == "sbir.gov":
             details[c.external_id] = sbir.detail_for(c)
+        elif c.source == "web":
+            # The search summary IS the grounded text — re-searching per
+            # candidate just for ranking would be too slow to be worth it.
+            details[c.external_id] = GrantDetail(
+                external_id=c.external_id,
+                eligibility_text=c.raw_snippet,
+                synopsis_text=c.raw_snippet,
+                deadline_display=c.close_date,
+                fetch_status="ok",
+            )
 
     scored = await ai_match.rank_and_explain(profile, candidates, details)
 
@@ -99,6 +113,11 @@ async def fetch_grant_detail(source: str, external_id: str, title: str) -> Grant
     the frontend only carries a lightweight reference, not the full text)."""
     if source == "grants.gov":
         return await grants_gov.fetch_detail(external_id)
+    if source == "web":
+        # external_id is the URL for web-sourced candidates. Worth a fresh,
+        # more targeted lookup here — this is a deliberate one-off user
+        # action, not blocking a results list.
+        return await web_search.fetch_web_detail(title, external_id)
     from app.models.schemas import GrantCandidate
 
     stub = GrantCandidate(source=source, external_id=external_id, title=title)
