@@ -114,6 +114,12 @@ there's no ambiguous prose to misinterpret.
 - **Eligibility interview**: given one grant's real text + the conversation so far,
   either `ask_question` (one targeted, specific question) or `give_verdict`
   (`qualifies` + `eligibility_summary` + `steps`).
+- **Document checklist** (Phase 2, opt-in): given a grant's title/opportunity number/known
+  attachment filename, the model uses live web search to find and read the grant's actual
+  full NOFO/RFP PDF, then reports `required_documents` and `application_steps` as a clean,
+  separate list — grants.gov's own API only exposes attachment *metadata* (filename), not
+  a documented download endpoint, so this reads the real PDF via search rather than a
+  direct fetch. `found: false` if the real document can't be located — never a guessed list.
 
 ---
 
@@ -176,6 +182,10 @@ Built in order, phase-gated (no phase started without explicit go-ahead):
    mark.
 9. **Live web search** — pulled forward from the original Phase 3 stretch scope, added as
    a third parallel data source using OpenAI's hosted `web_search` tool.
+10. **Phase 2: document checklist** — investigated grants.gov's attachment API (both the
+    legacy and new official `simpler.grants.gov` OpenAPI spec) and found no documented,
+    unauthenticated PDF download endpoint; pivoted to reading the real PDF via the
+    web-search tool instead, surfaced as an opt-in "Get full document checklist" action.
 
 Every phase/major change was tested end-to-end with **real AI calls** (not mocked)
 before being considered done — including deliberately re-testing after each reliability
@@ -189,11 +199,13 @@ fix to confirm the actual failure mode was resolved.
 |---|---|
 | 0 — Scaffold | ✅ Done |
 | 1 — Grant matching (+ web search pulled forward from Phase 3) | ✅ Done, tested live |
-| 2 — Requirement extraction (PDF attachment parsing, dedicated document checklist) | Not started |
+| 2 — Requirement extraction (document checklist from real PDFs) | ✅ Done, tested live |
 | 4 — Deploy to Render | Not started |
 
 **Known trade-offs:**
-- Web search adds real latency (~20–30s per search turn vs. ~5–10s without it).
+- Web search adds real latency (~20–30s per search turn vs. ~5–10s without it); reading a
+  full PDF for the document checklist can take up to ~30s, which is why it's an opt-in
+  button rather than automatic.
 - SBIR.gov's public API has been observed rate-limited during the build — the app
   degrades gracefully (returns no SBIR results rather than erroring) when this happens.
 
