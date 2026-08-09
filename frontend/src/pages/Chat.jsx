@@ -33,15 +33,23 @@ function formatDeadline(result) {
   return { text: 'No deadline listed', kind: 'normal' }
 }
 
+function VerifyLink({ url }) {
+  return url ? (
+    <a className="verify-link" href={url} target="_blank" rel="noreferrer">
+      View original listing <span aria-hidden="true">↗</span>
+    </a>
+  ) : (
+    <span className="verify-link verify-link-missing">No direct link found — verify with the agency directly</span>
+  )
+}
+
 function MatchCard({ result, onAskApply }) {
   const deadline = formatDeadline(result)
   return (
     <div className="match-card">
       <div className="match-top">
         <div>
-          <div className="match-title">
-            {result.url ? <a href={result.url} target="_blank" rel="noreferrer">{result.title}</a> : result.title}
-          </div>
+          <div className="match-title">{result.title}</div>
           <div className="match-meta">{result.agency || 'Unknown agency'} · {SOURCE_LABEL[result.source] || result.source}</div>
         </div>
         <div className="score-chip">{result.match_score}</div>
@@ -51,6 +59,7 @@ function MatchCard({ result, onAskApply }) {
         <span className={`pill deadline ${deadline.kind}`}>{deadline.text}</span>
         {result.funding_range && <span className="pill deadline">{result.funding_range}</span>}
       </div>
+      <VerifyLink url={result.url} />
       <button type="button" className="ask-apply-btn" onClick={() => onAskApply(result)}>
         How do I apply?
       </button>
@@ -69,6 +78,7 @@ function ExplanationCard({ explanation }) {
         {explanation.deadline_display && <span className="pill deadline">{explanation.deadline_display}</span>}
         {explanation.funding_range && <span className="pill deadline">{explanation.funding_range}</span>}
       </div>
+      <VerifyLink url={explanation.grant.url} />
       {explanation.steps?.length > 0 && (
         <ol className="explain-steps">
           {explanation.steps.map((s, i) => <li key={i}>{s}</li>)}
@@ -104,7 +114,7 @@ export default function Chat() {
       const next = [...prev]
       for (const m of matches) {
         if (!next.some((g) => g.source === m.source && g.external_id === m.external_id)) {
-          next.push({ source: m.source, external_id: m.external_id, title: m.title })
+          next.push({ source: m.source, external_id: m.external_id, title: m.title, url: m.url })
         }
       }
       return next

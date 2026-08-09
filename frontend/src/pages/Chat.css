@@ -121,8 +121,27 @@
 .pill.deadline.soon { color: var(--bad); background: var(--bad-soft); }
 .pill.deadline.past { color: var(--ink-faint); background: var(--surface-2); text-decoration: line-through; }
 
-.ask-apply-btn {
+.verify-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   margin-top: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+.verify-link:hover { text-decoration: underline; }
+.verify-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.verify-link-missing {
+  color: var(--ink-faint);
+  font-weight: 500;
+  font-style: italic;
+  cursor: default;
+}
+
+.ask-apply-btn {
+  margin-top: 10px;
   background: none;
   border: 1.5px solid var(--border);
   color: var(--ink);

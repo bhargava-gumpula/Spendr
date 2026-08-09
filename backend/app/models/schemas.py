@@ -44,6 +44,7 @@ class GrantRef(BaseModel):
     source: str
     external_id: str
     title: str
+    url: str | None = None
 
 
 class ChatRequest(BaseModel):
