@@ -10,7 +10,7 @@ const STEPS = [
   {
     n: '2',
     title: 'Get matched, not just listed',
-    body: 'Claude ranks live grants.gov and SBIR.gov opportunities by real fit — and tells you where you qualify and where you might fall short.',
+    body: 'Granted ranks live grants.gov and SBIR.gov opportunities by real fit — and tells you where you qualify and where you might fall short.',
   },
   {
     n: '3',

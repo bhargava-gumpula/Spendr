@@ -1,55 +1,30 @@
+/* Granted commits to a single dark, navy-blue visual identity — not a
+   light/dark toggle. Keeps the hackathon demo consistent regardless of
+   the viewer's OS theme. */
 :root {
-  --bg: #FAF7F2;
-  --surface: #FFFFFF;
-  --surface-2: #F3EEE6;
-  --ink: #1F1B16;
-  --ink-soft: #6B6358;
-  --ink-faint: #A39A8C;
-  --border: #EAE3D6;
+  --bg: #090D1A;
+  --surface: #121A30;
+  --surface-2: #1A2340;
+  --ink: #E8ECFA;
+  --ink-soft: #97A3C8;
+  --ink-faint: #62709B;
+  --border: #232E52;
 
-  --accent: #D97757;
-  --accent-strong: #B85C3E;
-  --accent-soft: rgba(217, 119, 87, 0.12);
-  --accent-soft-2: rgba(217, 119, 87, 0.22);
+  --accent: #4C7DFF;
+  --accent-strong: #77A0FF;
+  --accent-soft: rgba(76, 125, 255, 0.16);
+  --accent-soft-2: rgba(76, 125, 255, 0.3);
 
-  --good: #4A7A5C;
-  --good-soft: rgba(74, 122, 92, 0.12);
-  --warn: #B8862E;
-  --warn-soft: rgba(184, 134, 46, 0.13);
-  --bad: #C0433A;
-  --bad-soft: rgba(192, 67, 58, 0.1);
+  --good: #34C77B;
+  --good-soft: rgba(52, 199, 123, 0.14);
+  --warn: #E3B341;
+  --warn-soft: rgba(227, 179, 65, 0.15);
+  --bad: #F0645F;
+  --bad-soft: rgba(240, 100, 95, 0.14);
 
-  --shadow-sm: 0 1px 2px rgba(31, 27, 22, 0.06);
-  --shadow-md: 0 4px 16px rgba(31, 27, 22, 0.08);
-  --shadow-lg: 0 12px 32px rgba(31, 27, 22, 0.12);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #16140F;
-    --surface: #201D17;
-    --surface-2: #2A261E;
-    --ink: #F0EAE0;
-    --ink-soft: #B3A99A;
-    --ink-faint: #756B5C;
-    --border: #332E24;
-
-    --accent: #E8916D;
-    --accent-strong: #F0A886;
-    --accent-soft: rgba(232, 145, 109, 0.16);
-    --accent-soft-2: rgba(232, 145, 109, 0.28);
-
-    --good: #7FB88F;
-    --good-soft: rgba(127, 184, 143, 0.14);
-    --warn: #D9A63E;
-    --warn-soft: rgba(217, 166, 62, 0.15);
-    --bad: #D9695D;
-    --bad-soft: rgba(217, 105, 93, 0.14);
-
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
-  }
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 6px 22px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.55);
 }
 
 * { box-sizing: border-box; }
@@ -63,6 +38,7 @@ body {
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
 }
 
 h1, h2, h3 { font-weight: 700; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
