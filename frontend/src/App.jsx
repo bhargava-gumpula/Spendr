@@ -1,14 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
-const EMPTY_PROFILE = {
-  description: '',
-  field: '',
-  stage: '',
-  team_size: '',
-  location: '',
-  funding_needed: '',
-}
+const GREETING = "Hi, I'm here to help you find funding. Tell me about your project — what are you building, and roughly how much funding are you hoping to find?"
 
 const QUALIFIES_LABEL = {
   yes: 'Qualifies',
@@ -24,7 +17,7 @@ function formatDeadline(result) {
     const days = result.days_until_deadline
     if (days === null || days === undefined) return { text: `Closes ${formatted}`, kind: 'normal' }
     if (days < 0) return { text: `Closed ${formatted}`, kind: 'past' }
-    if (days === 0) return { text: `Closes today`, kind: 'soon' }
+    if (days === 0) return { text: 'Closes today', kind: 'soon' }
     if (days <= 14) return { text: `Closes ${formatted} · in ${days}d`, kind: 'soon' }
     return { text: `Closes ${formatted} · in ${days}d`, kind: 'normal' }
   }
@@ -32,128 +25,123 @@ function formatDeadline(result) {
   return { text: 'No deadline listed', kind: 'normal' }
 }
 
-function ScoreRing({ score }) {
-  const r = 24
-  const c = 2 * Math.PI * r
-  const offset = c - (Math.max(0, Math.min(100, score)) / 100) * c
+function MatchCard({ result, onAskApply }) {
+  const deadline = formatDeadline(result)
   return (
-    <div className="score-ring">
-      <svg viewBox="0 0 56 56">
-        <circle className="track" cx="28" cy="28" r={r} />
-        <circle
-          className="fill"
-          cx="28" cy="28" r={r}
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-        />
-      </svg>
-      <div className="num">{score}</div>
+    <div className="match-card">
+      <div className="match-top">
+        <div>
+          <div className="match-title">
+            {result.url ? <a href={result.url} target="_blank" rel="noreferrer">{result.title}</a> : result.title}
+          </div>
+          <div className="match-meta">{result.agency || 'Unknown agency'} · {result.source}</div>
+        </div>
+        <div className="score-chip">{result.match_score}</div>
+      </div>
+      <div className="pill-row">
+        <span className={`pill qual-${result.qualifies}`}><span className="pill-dot" />{QUALIFIES_LABEL[result.qualifies] || result.qualifies}</span>
+        <span className={`pill deadline ${deadline.kind}`}>{deadline.text}</span>
+        {result.funding_range && <span className="pill deadline">{result.funding_range}</span>}
+      </div>
+      <button type="button" className="ask-apply-btn" onClick={() => onAskApply(result)}>
+        How do I apply?
+      </button>
     </div>
   )
 }
 
-function GrantCard({ result, index }) {
-  const [open, setOpen] = useState(false)
-  const deadline = formatDeadline(result)
-  const hasReasons = (result.fit_reasons?.length > 0 || result.gap_reasons?.length > 0)
-
+function ExplanationCard({ explanation }) {
   return (
-    <article className="grant-card" style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}>
-      <div className="grant-top">
-        <div className="grant-title-wrap">
-          <div className="grant-title">
-            {result.url ? (
-              <a href={result.url} target="_blank" rel="noreferrer">{result.title}</a>
-            ) : result.title}
-          </div>
-          <div className="grant-meta">{result.agency || 'Unknown agency'} · {result.source}</div>
-        </div>
-        <ScoreRing score={result.match_score} />
+    <div className="explain-card">
+      <div className="explain-head">{explanation.grant.title}</div>
+      <div className="explain-meta-row">
+        {explanation.deadline_display && <span className="pill deadline">{explanation.deadline_display}</span>}
+        {explanation.funding_range && <span className="pill deadline">{explanation.funding_range}</span>}
       </div>
-
-      <div className="pill-row">
-        <span className={`pill qual-${result.qualifies}`}>
-          <span className="pill-dot" />
-          {QUALIFIES_LABEL[result.qualifies] || result.qualifies}
-        </span>
-        <span className={`pill deadline ${deadline.kind}`}>{deadline.text}</span>
-        {result.funding_range && <span className="pill deadline">{result.funding_range}</span>}
-        {result.confidence === 'low' && <span className="pill confidence-low">Low-confidence read</span>}
-      </div>
-
-      {hasReasons && (
-        <>
-          <button
-            type="button"
-            className={`reasons-toggle ${open ? 'open' : ''}`}
-            onClick={() => setOpen((o) => !o)}
-            aria-expanded={open}
-          >
-            {open ? 'Hide details' : 'Why this match?'}
-            <span className="chevron">▾</span>
-          </button>
-          <div className={`reasons-panel ${open ? 'open' : ''}`}>
-            <div className="reasons-panel-inner">
-              <div className="reasons">
-                {result.fit_reasons?.length > 0 && (
-                  <div className="reason-group fit">
-                    <h4>Why it fits</h4>
-                    <ul>{result.fit_reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
-                  </div>
-                )}
-                {result.gap_reasons?.length > 0 && (
-                  <div className="reason-group gap">
-                    <h4>Worth checking</h4>
-                    <ul>{result.gap_reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </>
+      {explanation.steps?.length > 0 && (
+        <ol className="explain-steps">
+          {explanation.steps.map((s, i) => <li key={i}>{s}</li>)}
+        </ol>
       )}
-    </article>
-  )
-}
-
-function SkeletonList() {
-  return (
-    <div className="skeleton-list">
-      {[0, 1, 2].map((i) => (
-        <div className="skeleton-card" key={i} style={{ animationDelay: `${i * 120}ms` }} />
-      ))}
+      {(explanation.confidence === 'low' || explanation.fetch_status !== 'ok') && (
+        <div className="explain-low-confidence">
+          {explanation.fetch_status !== 'ok'
+            ? "Couldn't fetch this grant's requirements page — verify details on the official listing before applying."
+            : 'Low-confidence read on this one — double check the details on the official listing.'}
+        </div>
+      )}
     </div>
   )
 }
 
 function App() {
-  const [profile, setProfile] = useState(EMPTY_PROFILE)
-  const [results, setResults] = useState(null)
+  const [messages, setMessages] = useState([{ role: 'assistant', content: GREETING }])
+  const [knownGrants, setKnownGrants] = useState([])
+  const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const scrollRef = useRef(null)
 
-  const update = (key) => (e) => setProfile((p) => ({ ...p, [key]: e.target.value }))
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages, loading])
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  function mergeKnownGrants(matches) {
+    if (!matches?.length) return
+    setKnownGrants((prev) => {
+      const next = [...prev]
+      for (const m of matches) {
+        if (!next.some((g) => g.source === m.source && g.external_id === m.external_id)) {
+          next.push({ source: m.source, external_id: m.external_id, title: m.title })
+        }
+      }
+      return next
+    })
+  }
+
+  async function sendMessage(text) {
+    const trimmed = text.trim()
+    if (!trimmed || loading) return
+
+    const userMsg = { role: 'user', content: trimmed }
+    const nextMessages = [...messages, userMsg]
+    setMessages(nextMessages)
+    setInput('')
     setLoading(true)
     setError(null)
-    setResults(null)
+
     try {
-      const resp = await fetch('/api/match', {
+      const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...profile, team_size: Number(profile.team_size) || 0 }),
+        body: JSON.stringify({
+          messages: nextMessages.map(({ role, content }) => ({ role, content })),
+          known_grants: knownGrants,
+        }),
       })
       if (!resp.ok) {
         const body = await resp.text()
         throw new Error(`Server error (${resp.status}): ${body.slice(0, 200)}`)
       }
-      setResults(await resp.json())
+      const data = await resp.json()
+      mergeKnownGrants(data.matches)
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply, matches: data.matches, explanation: data.explanation }])
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    sendMessage(input)
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage(input)
     }
   }
 
@@ -163,71 +151,54 @@ function App() {
         <div className="app-mark">G</div>
         <div>
           <h1>Granted</h1>
-          <p>Your AI grants advisor — plain language in, matched funding out.</p>
+          <p>Your AI grants advisor</p>
         </div>
       </header>
 
-      <form className="profile-form" onSubmit={handleSubmit}>
-        <div className="field">
-          <label htmlFor="description">Project description</label>
-          <textarea
-            id="description"
-            required
-            placeholder="e.g. A student-built mobile app that helps low-income families find nearby food assistance programs via SMS alerts."
-            value={profile.description}
-            onChange={update('description')}
-          />
-        </div>
+      <div className="chat-scroll" ref={scrollRef}>
+        {messages.map((m, i) => (
+          <div className={`msg-row ${m.role}`} key={i}>
+            {m.matches?.length > 0 || m.explanation ? (
+              <div className="msg-block">
+                <div className="msg-bubble">{m.content}</div>
+                {m.matches?.length > 0 && (
+                  <div className="match-cards">
+                    {m.matches.map((r) => (
+                      <MatchCard key={`${r.source}-${r.external_id}`} result={r} onAskApply={(g) => sendMessage(`How do I apply to "${g.title}"?`)} />
+                    ))}
+                  </div>
+                )}
+                {m.explanation && <ExplanationCard explanation={m.explanation} />}
+              </div>
+            ) : (
+              <div className="msg-bubble">{m.content}</div>
+            )}
+          </div>
+        ))}
 
-        <div className="field-row">
-          <div className="field">
-            <label htmlFor="field">Field</label>
-            <input id="field" required placeholder="e.g. food security" value={profile.field} onChange={update('field')} />
+        {loading && (
+          <div className="msg-row assistant">
+            <div className="msg-bubble">
+              <div className="typing-dots"><span /><span /><span /></div>
+            </div>
           </div>
-          <div className="field">
-            <label htmlFor="stage">Stage</label>
-            <input id="stage" required placeholder="e.g. prototype" value={profile.stage} onChange={update('stage')} />
-          </div>
-          <div className="field">
-            <label htmlFor="team_size">Team size</label>
-            <input id="team_size" type="number" min="1" required value={profile.team_size} onChange={update('team_size')} />
-          </div>
-        </div>
+        )}
 
-        <div className="field-row">
-          <div className="field">
-            <label htmlFor="location">Location</label>
-            <input id="location" required placeholder="e.g. California, USA" value={profile.location} onChange={update('location')} />
-          </div>
-          <div className="field">
-            <label htmlFor="funding_needed">Funding needed</label>
-            <input id="funding_needed" required placeholder="e.g. $15,000" value={profile.funding_needed} onChange={update('funding_needed')} />
-          </div>
-        </div>
+        {error && <div className="error-banner">{error}</div>}
+      </div>
 
-        <button className="submit-btn" type="submit" disabled={loading}>
-          {loading && <span className="spinner" />}
-          {loading ? 'Matching…' : 'Find my grants'}
+      <form className="composer" onSubmit={handleSubmit}>
+        <textarea
+          rows={1}
+          placeholder="Tell me about your project…"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <button type="submit" className="composer-send" disabled={loading || !input.trim()} aria-label="Send">
+          ↑
         </button>
       </form>
-
-      {error && <div className="error-banner">{error}</div>}
-
-      {loading && <SkeletonList />}
-
-      {results && results.length === 0 && !loading && (
-        <div className="empty-state">No live opportunities matched "{profile.field}" right now. Try broadening the field.</div>
-      )}
-
-      {results && results.length > 0 && !loading && (
-        <section className="results">
-          <div className="results-head">
-            <h2>Matches</h2>
-            <span>{results.length} ranked by fit</span>
-          </div>
-          {results.map((r, i) => <GrantCard key={`${r.source}-${r.external_id}`} result={r} index={i} />)}
-        </section>
-      )}
     </div>
   )
 }

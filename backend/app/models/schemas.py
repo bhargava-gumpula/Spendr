@@ -35,6 +35,33 @@ class GrantDetail(BaseModel):
     fetch_error: str | None = None
 
 
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+
+class GrantRef(BaseModel):
+    source: str
+    external_id: str
+    title: str
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage]
+    known_grants: list[GrantRef] = []
+
+
+class GrantExplanation(BaseModel):
+    grant: GrantRef
+    message: str
+    eligibility_summary: str | None = None
+    deadline_display: str | None = None
+    funding_range: str | None = None
+    steps: list[str] = []
+    confidence: str = "high"  # "high" | "low"
+    fetch_status: str = "ok"  # "ok" | "unavailable"
+
+
 class MatchResult(BaseModel):
     source: str
     external_id: str
@@ -50,3 +77,9 @@ class MatchResult(BaseModel):
     fit_reasons: list[str]
     gap_reasons: list[str]
     confidence: str  # "high" | "low"
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    matches: list[MatchResult] | None = None
+    explanation: GrantExplanation | None = None
