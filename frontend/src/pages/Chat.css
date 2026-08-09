@@ -17,20 +17,7 @@
 }
 .app-mark-link { flex: none; border-radius: 11px; }
 .app-mark-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.app-mark {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 1rem;
-  flex: none;
-  box-shadow: var(--shadow-sm);
-}
+.app-mark { width: 30px; height: 30px; flex: none; }
 .app-header h1 { font-size: 1.25rem; }
 .app-header p { color: var(--ink-soft); font-size: 0.86rem; margin-top: 1px; }
 

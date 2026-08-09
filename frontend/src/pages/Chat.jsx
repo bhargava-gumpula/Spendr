@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import DotMark from '../components/DotMark'
 import './Chat.css'
 
 const GREETING = "Hi, I'm your grants advisor. Let's start simple — what are you building?"
@@ -156,7 +157,7 @@ export default function Chat() {
     <div className="app">
       <header className="app-header">
         <Link to="/" className="app-mark-link">
-          <div className="app-mark">G</div>
+          <DotMark className="app-mark" />
         </Link>
         <div>
           <h1>Granted</h1>

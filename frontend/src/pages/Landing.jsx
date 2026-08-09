@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import DotMark from '../components/DotMark'
 import './Landing.css'
 
 const STEPS = [
@@ -24,27 +25,49 @@ export default function Landing() {
     <div className="landing">
       <nav className="landing-nav">
         <div className="landing-brand">
-          <div className="app-mark">G</div>
+          <DotMark className="brand-mark" />
           <span>Granted</span>
         </div>
         <Link to="/chat" className="nav-cta">Talk to your advisor</Link>
       </nav>
 
       <header className="hero">
-        <div className="hero-blob hero-blob-a" aria-hidden="true" />
-        <div className="hero-blob hero-blob-b" aria-hidden="true" />
-        <span className="eyebrow">AI Grants Advisor</span>
-        <h1>Stop guessing which grants you qualify for.</h1>
-        <p className="hero-sub">
-          Tell Granted about your project in a real conversation. It matches you against
-          live funding opportunities, checks your actual eligibility, and explains exactly
-          how to apply — no legalese, no dead ends.
-        </p>
-        <Link to="/chat" className="hero-cta">
-          Start the conversation
-          <span aria-hidden="true">→</span>
-        </Link>
-        <p className="hero-note">No sign-up. No forms. Just tell it about your project.</p>
+        <div className="hero-copy">
+          <span className="eyebrow">AI Grants Advisor</span>
+          <h1>Stop guessing which grants you qualify for.</h1>
+          <p className="hero-sub">
+            Tell Granted about your project in a real conversation. It matches you against
+            live funding opportunities, checks your actual eligibility, and explains exactly
+            how to apply — no legalese, no dead ends.
+          </p>
+          <Link to="/chat" className="hero-cta">
+            Start the conversation
+            <span aria-hidden="true">→</span>
+          </Link>
+          <p className="hero-note">No sign-up. No forms. Just tell it about your project.</p>
+        </div>
+
+        <div className="hero-visual" aria-hidden="true">
+          <div className="glow" />
+          <div className="float-card float-card-back">
+            <div className="fc-top">
+              <div>
+                <div className="fc-title">Community Health Innovation Grant</div>
+                <div className="fc-meta">HHS &middot; grants.gov</div>
+              </div>
+              <div className="fc-score">87</div>
+            </div>
+            <div className="fc-pills">
+              <span className="fc-pill fc-pill-good">Likely qualifies</span>
+              <span className="fc-pill">Closes in 18d</span>
+            </div>
+          </div>
+          <div className="float-card float-card-front">
+            <div className="fc-chat-row fc-chat-assistant">Is your team a registered 501(c)(3)?</div>
+            <div className="fc-chat-row fc-chat-user">Not yet, we're a student team.</div>
+            <div className="fc-chat-row fc-chat-assistant">Got it — here's what to do next.</div>
+          </div>
+        </div>
       </header>
 
       <section className="steps">
