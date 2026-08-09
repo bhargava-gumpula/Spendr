@@ -64,10 +64,12 @@ function MatchCard({ result, onAskApply }) {
         <span className={`pill deadline ${deadline.kind}`}>{deadline.text}</span>
         {result.funding_range && <span className="pill deadline">{result.funding_range}</span>}
       </div>
-      <VerifyLink url={result.url} />
-      <button type="button" className="ask-apply-btn" onClick={() => onAskApply(result)}>
-        How do I apply?
-      </button>
+      <div className="card-actions">
+        <VerifyLink url={result.url} />
+        <button type="button" className="ask-apply-btn" onClick={() => onAskApply(result)}>
+          How do I apply?
+        </button>
+      </div>
     </div>
   )
 }

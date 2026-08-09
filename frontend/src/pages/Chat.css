@@ -121,11 +121,18 @@
 .pill.deadline.soon { color: var(--bad); background: var(--bad-soft); }
 .pill.deadline.past { color: var(--ink-faint); background: var(--surface-2); text-decoration: line-through; }
 
+.card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 12px;
+}
+
 .verify-link {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-top: 12px;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--accent-strong);
@@ -141,7 +148,7 @@
 }
 
 .ask-apply-btn {
-  margin-top: 10px;
+  flex: none;
   background: none;
   border: 1.5px solid var(--border);
   color: var(--ink);
