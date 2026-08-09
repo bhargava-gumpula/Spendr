@@ -34,12 +34,17 @@ function formatDeadline(result) {
 }
 
 function VerifyLink({ url }) {
-  return url ? (
-    <a className="verify-link" href={url} target="_blank" rel="noreferrer">
+  if (!url) {
+    return <span className="verify-link verify-link-missing">No direct link found — verify with the agency directly</span>
+  }
+  function handleClick(e) {
+    e.preventDefault()
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+  return (
+    <a className="verify-link" href={url} target="_blank" rel="noopener noreferrer" onClick={handleClick}>
       View original listing <span aria-hidden="true">↗</span>
     </a>
-  ) : (
-    <span className="verify-link verify-link-missing">No direct link found — verify with the agency directly</span>
   )
 }
 
